@@ -89,3 +89,72 @@ export interface BrowserEvent {
   data?: unknown;
   timestamp: Date;
 }
+
+// ============================================
+// Workflow Types
+// ============================================
+
+/** Configuration for a site workflow */
+export interface SiteConfig {
+  /** Unique site identifier */
+  id: string;
+  /** Human-readable site name */
+  name: string;
+  /** Base URL for the site */
+  baseUrl: string;
+  /** Proxy to use for this site (optional) */
+  proxy?: ProxyConfig;
+  /** Session name to use/create for this site */
+  sessionName?: string;
+  /** Run headless (default: false) */
+  headless?: boolean;
+}
+
+/** Result from a workflow action */
+export interface WorkflowResult<T = unknown> {
+  success: boolean;
+  data?: T;
+  error?: string;
+  timestamp: Date;
+}
+
+/** Base interface that all site workflows must implement */
+export interface ISiteWorkflow {
+  /** Site configuration */
+  readonly config: SiteConfig;
+
+  /** Initialize the browser for this site */
+  init(): Promise<void>;
+
+  /** Check if currently logged in */
+  isLoggedIn(): Promise<boolean>;
+
+  /**
+   * Perform login - opens browser for manual login if needed
+   * Returns true if login successful
+   */
+  login(): Promise<WorkflowResult<void>>;
+
+  /** Save current session for future use */
+  saveSession(): Promise<void>;
+
+  /** Load previously saved session */
+  loadSession(): Promise<boolean>;
+
+  /** Close the browser */
+  close(): Promise<void>;
+}
+
+/** Generic data item scraped from a site */
+export interface ScrapedItem {
+  /** Unique ID from the source site */
+  sourceId: string;
+  /** Type of item (site-specific) */
+  type: string;
+  /** Raw data */
+  data: Record<string, unknown>;
+  /** When this was scraped */
+  scrapedAt: Date;
+  /** Source site ID */
+  siteId: string;
+}
