@@ -1,11 +1,11 @@
 {
-  "name": "bb-browser",
+  "name": "bb-betting",
   "version": "1.0.0",
-  "description": "Chrome-based browser automation for authenticated web scraping with proxy support",
+  "description": "Chrome-based browser automation for logging into betting sites and downloading bet histories",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
-    "bb-browser": "./dist/cli/index.js"
+    "bb-betting": "./dist/cli/index.js"
   },
   "scripts": {
     "build": "tsc",

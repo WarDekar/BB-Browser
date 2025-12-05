@@ -15,7 +15,7 @@ export interface ApiServerConfig {
 }
 
 /**
- * REST API server for BB-Browser.
+ * REST API server for BB-Betting.
  * Provides HTTP endpoints for browser and workflow management.
  */
 export class ApiServer {
@@ -672,7 +672,7 @@ export class ApiServer {
 
     return new Promise((resolve) => {
       this.server = this.app.listen(this.config.port, this.config.host!, () => {
-        console.log(`🚀 BB-Browser API running at http://${this.config.host}:${this.config.port}`);
+        console.log(`🚀 BB-Betting API running at http://${this.config.host}:${this.config.port}`);
         console.log(`📺 Web UI available at http://${this.config.host}:${this.config.port}/`);
         resolve();
       });

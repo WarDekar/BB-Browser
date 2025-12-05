@@ -1,7 +1,7 @@
-# BB-Browser Project Plan
+# BB-Betting Project Plan
 
 ## Overview
-BB-Browser is a Chrome-based browser automation tool for authenticated web scraping with proxy support. It provides CLI, REST API, and Web Interface access.
+BB-Betting is a Chrome-based browser automation tool for logging into betting sites and downloading bet histories. It provides CLI, REST API, and Web Interface access.
 
 ## Core Features
 
@@ -35,7 +35,7 @@ BB-Browser is a Chrome-based browser automation tool for authenticated web scrap
 ## Technical Architecture
 
 ```
-bb-browser/
+bb-betting/
 ├── src/
 │   ├── core/                      # Browser engine
 │   │   ├── BrowserManager.ts      # Manages browser instances
@@ -136,13 +136,13 @@ interface SessionData {
 ### CLI (Phase 2)
 ```bash
 # Launch a browser with proxy
-bb-browser launch --name "site-a" --proxy "http://user:pass@proxy.com:8080"
+bb-betting launch --name "site-a" --proxy "http://user:pass@proxy.com:8080"
 
 # Save session after manual login
-bb-browser save-session --name "site-a" --session "my-session"
+bb-betting save-session --name "site-a" --session "my-session"
 
 # Later: restore and use session
-bb-browser launch --name "site-a" --session "my-session"
+bb-betting launch --name "site-a" --session "my-session"
 ```
 
 ### API (Phase 3)
@@ -158,7 +158,7 @@ curl http://localhost:3000/browsers
 
 ### Library (Phase 1)
 ```typescript
-import { BrowserManager } from 'bb-browser';
+import { BrowserManager } from 'bb-betting';
 
 const manager = new BrowserManager();
 

@@ -33,8 +33,8 @@ function getWorkflowManager(): WorkflowManager {
 }
 
 program
-  .name('bb-browser')
-  .description('Chrome-based browser automation for authenticated web scraping')
+  .name('bb-betting')
+  .description('Chrome-based browser automation for logging into betting sites and downloading bet histories')
   .version('1.0.0');
 
 // ============================================

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BB-Browser - Betting Site Manager</title>
+  <title>BB-Betting - Betting Site Manager</title>
   <style>
     :root {
       --bg-primary: #1a1d29;
@@ -478,7 +478,7 @@
     <header>
       <h1>
         <span class="status-indicator"></span>
-        BB-Browser
+        BB-Betting
       </h1>
       <div>
         <button class="btn-secondary btn-small" onclick="openModal('addSiteModal')">+ Add Site</button>
@@ -1080,7 +1080,13 @@
         log(`Found ${bets.length} bets total`, 'success');
 
         // Show summary of wins/losses
-        const wins = bets.filter(b => b.winLoss && b.winLoss.includes('+')).length;
+        // Wins are positive amounts (no minus sign), losses have minus sign
+        const wins = bets.filter(b => {
+          if (!b.winLoss) return false;
+          const val = b.winLoss.trim();
+          // Has a number but no minus sign = win
+          return /\d/.test(val) && !val.includes('-');
+        }).length;
         const losses = bets.filter(b => b.winLoss && b.winLoss.includes('-')).length;
         log(`Summary: ${wins} wins, ${losses} losses`, 'info');
 
@@ -1587,7 +1593,7 @@
       await loadSites();
       await loadBrowsers();
       await loadSessions();
-      log('BB-Browser ready (server-side storage)', 'success');
+      log('BB-Betting ready (server-side storage)', 'success');
     }
     init();
   </script>

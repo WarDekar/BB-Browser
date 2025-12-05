@@ -1,4 +1,4 @@
-# BB-Browser
+# BB-Betting
 
 Chrome-based browser automation for logging into betting sites and downloading bet histories.
 
@@ -51,10 +51,11 @@ Each betting site gets its own workflow class extending `BaseSiteWorkflow`:
 - `getBetHistory()` - Scrape bet history data
 - `saveSession()` / `loadSession()` - Persist login sessions
 
-### Web UI (localStorage)
-Sites and proxies are stored in browser localStorage:
-- `bb-browser-sites` - Array of site configs with credentials
-- `bb-browser-proxies` - Array of proxy configs
+### Site/Proxy Storage (Server-Side)
+Sites and proxies are stored on the server (not localStorage):
+- `./config/sites.json` - Site configs with credentials
+- `./config/proxies.json` - Proxy configs
+- Loaded on server startup via `SiteConfigManager`
 
 Each site config:
 ```typescript
@@ -140,6 +141,8 @@ Each site config:
 - **Scraper Workaround**: User must manually set date range in browser first, then run Get History to scrape displayed data
 
 ### TODO
+- Create `bet_history.db` SQLite database with normalized bet records
+- Add ESPN game ID matching for cross-referencing with BB-CBB
 - Export bet history to CSV/JSON file
 - Add more betting sites (Bovada, DraftKings, etc.)
 
@@ -233,3 +236,89 @@ await page.waitForSelector('.content-loaded');
 - Sessions are stored as JSON in `./sessions/{name}.json`
 - Web UI auto-refreshes browser list every 5 seconds
 - Server runs on `127.0.0.1:3000` by default
+
+## BB-CBB Integration (PostgreSQL)
+
+BB-Betting bet histories will be stored in the same PostgreSQL database as BB-CBB, using a new `bb_betting` schema.
+
+### PostgreSQL Database: `bb_cbb`
+
+**Connection:**
+```
+postgresql://bbrando@localhost:5432/bb_cbb
+```
+
+**For TypeScript (BB-Betting):**
+```typescript
+import pg from 'pg';
+const pool = new pg.Pool({
+  connectionString: 'postgresql://bbrando@localhost:5432/bb_cbb'
+});
+```
+
+**For Python (BB-CBB):**
+```python
+import psycopg2
+conn = psycopg2.connect("postgresql://bbrando@localhost:5432/bb_cbb")
+```
+
+### Existing Schemas (READ-ONLY Reference)
+
+| Schema | Purpose | Key Tables |
+|--------|---------|------------|
+| `hoopr` | hoopR/ESPN game data | teams, games, players, player_box, team_box, pbp_box |
+| `sportsoptions` | DonBest betting lines | games, teams, team_mappings, bb_predictions |
+| `bb_stats` | Advanced basketball stats | final_2h_spreads, team_season_stats, routed_2h |
+
+**Cross-references:** All schemas link via ESPN game IDs:
+- `hoopr.games.id` = `sportsoptions.games.espn_id` = `bb_stats.*.espn_id`
+- `hoopr.games.donbest_id` → `sportsoptions.games.rotation`
+
+### New Schema: `bb_betting`
+
+The `bb_betting` schema will store scraped bet histories from BB-Betting with:
+- Normalized bet records from all sportsbooks (Pinnacle, Sports411, BetOnline, etc.)
+- Cross-references to ESPN game IDs for matching with BB-CBB data
+
+**Planned Tables:**
+```sql
+-- bb_betting.bets - Individual bet records
+CREATE TABLE bb_betting.bets (
+    id SERIAL PRIMARY KEY,
+    site VARCHAR(50) NOT NULL,           -- 'pinnacle', 'sports411', 'betonline'
+    site_bet_id VARCHAR(100),            -- Bet ID from the sportsbook
+    sport VARCHAR(50),                   -- 'basketball', 'football', etc.
+    league VARCHAR(50),                  -- 'ncaab', 'nba', 'nfl', etc.
+    bet_type VARCHAR(50),                -- 'spread', 'moneyline', 'total', 'parlay'
+    selection TEXT,                      -- Team/selection picked
+    matchup TEXT,                        -- Full matchup description
+    espn_id INTEGER,                     -- Cross-reference to hoopr.games.id
+    odds DECIMAL(8,3),                   -- American or decimal odds
+    stake DECIMAL(10,2),                 -- Amount wagered
+    to_win DECIMAL(10,2),                -- Potential payout
+    result VARCHAR(20),                  -- 'win', 'loss', 'push', 'pending'
+    profit_loss DECIMAL(10,2),           -- Actual P/L
+    placed_at TIMESTAMP WITH TIME ZONE,  -- When bet was placed
+    settled_at TIMESTAMP WITH TIME ZONE, -- When bet was settled
+    raw_data JSONB,                      -- Original scraped data
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE(site, site_bet_id)
+);
+
+-- bb_betting.scrape_runs - Track when we scraped each site
+CREATE TABLE bb_betting.scrape_runs (
+    id SERIAL PRIMARY KEY,
+    site VARCHAR(50) NOT NULL,
+    from_date DATE,
+    to_date DATE,
+    bets_count INTEGER,
+    scraped_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+This enables:
+- P/L analysis across books
+- Comparison of actual bets vs historical odds (theOddsAPI in `betting_data`)
+- Correlation with game statistics and shooting surplus data from BB-CBB
+- Query example: `SELECT b.*, g.home_team, g.away_team FROM bb_betting.bets b JOIN hoopr.games g ON b.espn_id = g.id`

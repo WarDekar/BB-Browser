@@ -1,12 +1,12 @@
 /**
- * Test script to verify BB-Browser functionality
+ * Test script to verify BB-Betting functionality
  * Run with: npx tsx test.ts
  */
 
 import { BrowserManager } from './src/index.js';
 
 async function main() {
-  console.log('🚀 Starting BB-Browser test...\n');
+  console.log('🚀 Starting BB-Betting test...\n');
 
   const manager = new BrowserManager();
 
